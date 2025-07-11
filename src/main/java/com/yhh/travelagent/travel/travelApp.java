@@ -5,6 +5,7 @@ import com.yhh.travelagent.advisor.ProhibitedWordAdvisor;
 import com.yhh.travelagent.advisor.ReReadingAdvisor;
 import com.yhh.travelagent.chatmemory.FileBasedChatMemory;
 import com.yhh.travelagent.chatmemory.MybatisPlusChatMemory;
+import com.yhh.travelagent.rag.QueryRewriter;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -96,10 +97,13 @@ public class travelApp {
      */
     @Resource
     private VectorStore loveAppVectorStore;
+    @Resource
+    private QueryRewriter queryRewriter;
     public String doChatWithRag(String message, String chatId) {
+        String rewrittenMessage = queryRewriter.doQueryRewrite(message);
         ChatResponse chatResponse = chatClient
                 .prompt()
-                .user(message)
+                .user(rewrittenMessage)
                 .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
                 // 开启日志，便于观察效果

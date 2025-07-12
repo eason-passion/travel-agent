@@ -4,8 +4,10 @@ import com.yhh.travelagent.advisor.MyLoggerAdvisor;
 import com.yhh.travelagent.advisor.ProhibitedWordAdvisor;
 import com.yhh.travelagent.advisor.ReReadingAdvisor;
 import com.yhh.travelagent.chatmemory.FileBasedChatMemory;
+import com.yhh.travelagent.chatmemory.MySQLChatMemory;
 import com.yhh.travelagent.chatmemory.MybatisPlusChatMemory;
 import com.yhh.travelagent.rag.QueryRewriter;
+import com.yhh.travelagent.rag.TravelAppRagCustomAdvisorFactory;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -18,6 +20,8 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -43,7 +47,7 @@ public class travelApp {
             "基于这些细节，为用户量身定制全面且实用的旅游规划，包括目的地推荐（附具体推荐理由）、每日行程安排（细化到交通方式、景点玩法、餐饮建议）、住宿选择（结合预算和需求推荐合适类型及区域）、出行注意事项（天气、穿搭、当地习俗等）。\n" +
             "始终以用户需求为核心，通过持续提问精准捕捉潜在诉求（比如是否有必去清单、是否想避开人流高峰等），确保给出的规划方案贴合用户期待，帮用户避开旅行中的常见坑，让每一段行程都更符合其个性化期待，拥有舒适且难忘的旅行体验。";
 
-    public travelApp(ChatModel dashscopeChatModel, MybatisPlusChatMemory chatMemory) {
+    public travelApp(ChatModel dashscopeChatModel, MybatisPlusChatMemory chatMemory,MySQLChatMemory jdbcmysqlchatMemory) {
         // 初始化基于文件的对话记忆
 //        String fileDir = System.getProperty("user.dir") + "/chat-memory";
 //        ChatMemory chatMemory = new FileBasedChatMemory(fileDir);
@@ -99,8 +103,13 @@ public class travelApp {
     @Resource
     @Qualifier("travelAppVectorStore")
     private VectorStore travelAppVectorStore;
+
+    @Resource
+    private VectorStore pgVectorVectorStore;
     @Resource
     private QueryRewriter queryRewriter;
+    @Resource
+    private Advisor travelAppRagCloudAdvisor;
     public String doChatWithRag(String message, String chatId) {
         String rewrittenMessage = queryRewriter.doQueryRewrite(message);
         ChatResponse chatResponse = chatClient
@@ -112,18 +121,57 @@ public class travelApp {
                 .advisors(new MyLoggerAdvisor())
                 // 应用知识库问答
                 .advisors(new QuestionAnswerAdvisor(travelAppVectorStore))
+                // 应用增强检索服务（云知识库服务）
+//                .advisors(travelAppRagCloudAdvisor)
+                // rag应用 （基于 PgVector 向量存储）
+//                .advisors(new QuestionAnswerAdvisor(pgVectorVectorStore))
+//                 应用自定义的 RAG 检索增强服务（文档查询器 + 上下文增强器）
+//                .advisors(
+//                        TravelAppRagCustomAdvisorFactory.createTravelAppRagCustomAdvisor(
+//                                travelAppVectorStore, "风景优美"
+//                        )
+//                )
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
         log.info("content: {}", content);
         return content;
     }
-    /**
-     * 云知识库 rag
-     */
+//    /**
+//     * 云知识库 rag
+//     */
+//    @Resource
+//    private Advisor travelAppRagCloudAdvisor;
+//    public String doChatWithRag2(String message, String chatId) {
+//        ChatResponse chatResponse = chatClient
+//                .prompt()
+//                .user(message)
+//                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+//                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+//                // 开启日志，便于观察效果
+//                .advisors(new MyLoggerAdvisor())
+//                // 应用增强检索服务（云知识库服务）
+//                .advisors(travelAppRagCloudAdvisor)
+//                .call()
+//                .chatResponse();
+//        String content = chatResponse.getResult().getOutput().getText();
+//        log.info("content: {}", content);
+//        return content;
+//    }
+
+
+    // AI 调用工具能力
     @Resource
-    private Advisor travelAppRagCloudAdvisor;
-    public String doChatWithRag2(String message, String chatId) {
+    private ToolCallback[] allTools;
+
+    /**
+     * AI 旅游规划报告功能（支持调用工具）
+     *
+     * @param message
+     * @param chatId
+     * @return
+     */
+    public String doChatWithTools(String message, String chatId) {
         ChatResponse chatResponse = chatClient
                 .prompt()
                 .user(message)
@@ -131,11 +179,35 @@ public class travelApp {
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
                 // 开启日志，便于观察效果
                 .advisors(new MyLoggerAdvisor())
-                // 应用增强检索服务（云知识库服务）
-                .advisors(travelAppRagCloudAdvisor)
+                .tools(allTools)
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();
+        log.info("content: {}", content);
+        return content;
+    }
+
+
+
+
+    /**
+     * mcp
+     */
+    @Resource
+    private ToolCallbackProvider toolCallbackProvider;
+
+    public String doChatWithMcp(String message, String chatId) {
+        ChatResponse response = chatClient
+                .prompt()
+                .user(message)
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                // 开启日志，便于观察效果
+                .advisors(new MyLoggerAdvisor())
+                .tools(toolCallbackProvider)
+                .call()
+                .chatResponse();
+        String content = response.getResult().getOutput().getText();
         log.info("content: {}", content);
         return content;
     }

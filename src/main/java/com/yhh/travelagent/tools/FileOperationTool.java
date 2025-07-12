@@ -4,12 +4,14 @@ import cn.hutool.core.io.FileUtil;
 import com.yhh.travelagent.constants.FileConstant;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.stereotype.Component;
 
 /**
  * @Date 2025-07-12 14:15
  * @ClassName: FileOperationTool
  * @Description: 文件操作工具类
  */
+
 public class FileOperationTool {
 
     private final String FILE_DIR = FileConstant.FILE_SAVE_DIR + "/file";

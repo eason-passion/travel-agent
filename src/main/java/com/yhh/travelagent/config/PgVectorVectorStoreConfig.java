@@ -36,9 +36,8 @@ public class PgVectorVectorStoreConfig {
     @Resource
     private TravelAppDocumentLoader travelAppDocumentLoader;
 
-    @Bean
-    @Primary
-    public VectorStore pgVectorVectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel dashscopeEmbeddingModel) {
+    @Bean("pgVectorVectorStore")
+    public VectorStore pgVectorVectorStore(@Qualifier("postgresJdbcTemplate") JdbcTemplate jdbcTemplate, EmbeddingModel dashscopeEmbeddingModel) {
         // 创建PgVectorStore实例，配置向量存储的参数
         VectorStore vectorStore = PgVectorStore.builder(jdbcTemplate, dashscopeEmbeddingModel)
                 .dimensions(1536)                    // 设置向量的维度，可选，默认为模型维度或1536
@@ -75,7 +74,7 @@ public class PgVectorVectorStoreConfig {
         } else {
             log.info("所有文档已存在，无需重复添加");
         }
-        vectorStore.add(documents);
+//        vectorStore.add(documents);
         return vectorStore;
     }
 }

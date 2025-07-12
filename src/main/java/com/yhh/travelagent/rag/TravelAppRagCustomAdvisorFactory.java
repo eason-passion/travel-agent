@@ -19,7 +19,7 @@ public class TravelAppRagCustomAdvisorFactory {
      * @param status      状态
      * @return 自定义的 RAG 检索增强顾问
      */
-    public static Advisor createLoveAppRagCustomAdvisor(VectorStore vectorStore, String status) {
+    public static Advisor createTravelAppRagCustomAdvisor(VectorStore vectorStore, String status) {
         // 过滤特定状态的文档
         Filter.Expression expression = new FilterExpressionBuilder()
                 .eq("status", status)

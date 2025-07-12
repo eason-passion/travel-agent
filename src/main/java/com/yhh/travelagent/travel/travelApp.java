@@ -19,6 +19,7 @@ import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -96,7 +97,8 @@ public class travelApp {
      * 基于本地知识库 rag
      */
     @Resource
-    private VectorStore loveAppVectorStore;
+    @Qualifier("travelAppVectorStore")
+    private VectorStore travelAppVectorStore;
     @Resource
     private QueryRewriter queryRewriter;
     public String doChatWithRag(String message, String chatId) {
@@ -109,7 +111,7 @@ public class travelApp {
                 // 开启日志，便于观察效果
                 .advisors(new MyLoggerAdvisor())
                 // 应用知识库问答
-                .advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
+                .advisors(new QuestionAnswerAdvisor(travelAppVectorStore))
                 .call()
                 .chatResponse();
         String content = chatResponse.getResult().getOutput().getText();

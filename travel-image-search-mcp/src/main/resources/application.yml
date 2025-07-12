@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: travel-image-search-mcp
+  profiles:
+    active: stdio
+server:
+  port: 8127
+

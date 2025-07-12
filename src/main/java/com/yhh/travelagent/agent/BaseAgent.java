@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -36,6 +37,9 @@ public abstract class BaseAgent {
     private int maxSteps = 10;
     private int currentStep = 0;
 
+    // 循环检测
+    private int duplicateThreshold = 2;
+
     // LLM
     private ChatClient chatClient;
 
@@ -62,28 +66,33 @@ public abstract class BaseAgent {
         // 保存结果列表
         List<String> results = new ArrayList<>();
         try {
+            // 步骤循环
             for (int i = 0; i < maxSteps && state != AgentState.FINISHED; i++) {
-                int stepNumber = i + 1;
-                currentStep = stepNumber;
-                log.info("Executing step " + stepNumber + "/" + maxSteps);
-                // 单步执行
+                currentStep = i + 1;
+                log.info("执行步骤 {}/{}", currentStep, maxSteps);
                 String stepResult = step();
-                String result = "Step " + stepNumber + ": " + stepResult;
-                results.add(result);
+                results.add("Step " + currentStep + ": " + stepResult);
+
+                // 检查是否陷入循环
+                if (isStuck()) {
+                    handleStuckState();
+                    results.add("检测到可能的循环，已添加额外提示以避免重复");
+                }
             }
-            // 检查是否超出步骤限制
+
+            // 检查终止条件
             if (currentStep >= maxSteps) {
                 state = AgentState.FINISHED;
-                results.add("Terminated: Reached max steps (" + maxSteps + ")");
+                results.add("终止: 达到最大步骤 (" + maxSteps + ")");
             }
+
             return String.join("\n", results);
         } catch (Exception e) {
             state = AgentState.ERROR;
-            log.error("Error executing agent", e);
-            return "执行错误" + e.getMessage();
+            log.error("执行错误", e);
+            return "执行错误: " + e.getMessage();
         } finally {
-            // 清理资源
-            this.cleanup();
+            cleanup();
         }
     }
 
@@ -184,6 +193,60 @@ public abstract class BaseAgent {
         });
 
         return emitter;
+    }
+
+    /**
+     * 处理陷入循环的状态
+     */
+    protected void handleStuckState() {
+        String stuckPrompt = "观察到重复响应。请考虑新的策略，避免重复已尝试过的无效路径。";
+        this.nextStepPrompt = stuckPrompt + "\n" + (this.nextStepPrompt != null ? this.nextStepPrompt : "");
+        log.warn("检测到智能体陷入循环状态。添加额外提示: {}", stuckPrompt);
+    }
+
+    /**
+     * 检查代理是否陷入循环
+     *
+     * @return 是否陷入循环
+     */
+    protected boolean isStuck() {
+        if (messageList.size() < 2) {
+            return false;
+        }
+
+        // 获取最后一条助手消息
+        AssistantMessage lastAssistantMessage = null;
+        for (int i = messageList.size() - 1; i >= 0; i--) {
+            if (messageList.get(i) instanceof AssistantMessage) {
+                lastAssistantMessage = (AssistantMessage) messageList.get(i);
+                break;
+            }
+        }
+
+        if (lastAssistantMessage == null || lastAssistantMessage.getText() == null
+                || lastAssistantMessage.getText().isEmpty()) {
+            return false;
+        }
+
+        // 计算重复内容出现次数
+        int duplicateCount = 0;
+        String lastContent = lastAssistantMessage.getText();
+
+        for (int i = messageList.size() - 2; i >= 0; i--) {
+            Message msg = messageList.get(i);
+            if (msg instanceof AssistantMessage) {
+                AssistantMessage assistantMsg = (AssistantMessage) msg;
+                if (lastContent.equals(assistantMsg.getText())) {
+                    duplicateCount++;
+
+                    if (duplicateCount >= this.duplicateThreshold) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
 }

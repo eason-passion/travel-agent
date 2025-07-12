@@ -20,6 +20,8 @@ public class ToolRegistration {
     @Autowired
     private DateTimeTool dateTimeTool;
 
+    private TerminateTool terminateTool;
+
     /**
      * 注册所有AI工具
      */
@@ -33,7 +35,9 @@ public class ToolRegistration {
                 new ResourceDownloadTool(),
                 new TerminalOperationTool(),
                 new PDFGenerationTool(),
-                new DateTimeTool()
+//                new ImageSearchTool(),
+                new DateTimeTool(),
+                new TerminateTool()
         );
     }
 }

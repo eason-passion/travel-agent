@@ -77,22 +77,31 @@ mvn clean package -Dmaven.test.skip=true
 java -jar target/travel-agent-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 ```
 #### 访问系统
-接口文档：启动后访问 http://localhost:8080/doc.html（Knife4j 可视化界面）
-核心接口：/api/ai//travel_app/chat/sse/emitter（接收用户需求，返回旅游规划结果）
+接口文档：启动后访问 
+```curl
+http://localhost:8080/doc.html（Knife4j 可视化界面）
+```
+核心接口：
+```curl
+/api/ai//travel_app/chat/sse/emitter 
+```
+（接收用户需求，返回旅游规划结果）
 
 ### 常见问题
-如何修改默认端口？
-在 application.yml 中添加 server.port=你的端口号 即可。
-本地知识库如何更新？
-将新的文档（如 PDF、TXT 等）放入 src/main/resources/document 目录，系统会自动加载（需重启服务）。
-大模型调用失败怎么办？
+#### 如何修改默认端口？
+在application.yml 中添加 server.port=你的端口号 即可。
+#### 本地知识库如何更新？
+将新的文档（如 PDF、MD等）放入 src/main/resources/document 目录，系统会自动加载（需重启服务）。
+#### 大模型调用失败怎么办？
 检查 DashScope API 密钥是否有效、网络是否通畅，或在配置文件中切换其他模型。
 ### 贡献指南
+```plaintext
 Fork 本仓库
 创建特性分支：git checkout -b feature/your-feature
 提交修改：git commit -m "Add your feature"
 推送分支：git push origin feature/your-feature
 提交 Pull Request
+```
 ### 联系作者
 联系方式
 项目维护者：Eason

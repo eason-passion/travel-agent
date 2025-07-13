@@ -34,3 +34,4 @@ build/
 /src/test/
 
 application-local.yml
+travel-image-search-mcp/src/main/resources/*.yml

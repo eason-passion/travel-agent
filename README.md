@@ -32,20 +32,20 @@ travel-agent/
 对话记忆功能：支持对话记忆，记录用户历史对话，提供连贯服务。
 流式输出支持：支持流式输出，实时返回处理结果，提升用户体验。
 ## 技术栈
-核心框架：Spring Boot 3.5.3
-AI 交互：Spring AI、DashScope SDK（阿里大模型服务）
-数据存储：MySQL（业务数据）、PgVector（向量数据库，支持 RAG 检索）
-ORM 框架：MyBatis-Plus（简化数据库操作）
-API 文档：Knife4j（OpenAPI 3 规范，接口可视化）
-工具库：Hutool（Java 工具类集合）
-开发语言：Java 21
++ 核心框架：Spring Boot 3.5.3
++ AI 交互：Spring AI、DashScope SDK（阿里大模型服务）
++ 数据存储：MySQL（业务数据）、PgVector（向量数据库，支持 RAG 检索）
++ ORM 框架：MyBatis-Plus（简化数据库操作）
++ API 文档：Knife4j（OpenAPI 3 规范，接口可视化）
++ 工具库：Hutool（Java 工具类集合）
++ 开发语言：Java 21
 ## 快速开始
 ### 环境准备
-JDK 21 及以上
-Maven 3.6+
-MySQL 8.0+
-PgVector 数据库（用于向量存储，可选，视 RAG 功能启用情况）
-阿里 DashScope API 密钥（需自行申请，用于调用大模型）
++ JDK 21 及以上
++ Maven 3.6+
++ MySQL 8.0+
++ PgVector 数据库（用于向量存储，可选，视 RAG 功能启用情况）
++ 阿里云百练 DashScope API 密钥（需自行申请，用于调用大模型）
 ### 部署步骤
 #### 克隆项目
 ```bash
@@ -103,6 +103,6 @@ Fork 本仓库
 提交 Pull Request
 ```
 ### 联系作者
-联系方式
-项目维护者：Eason
-仓库地址：https://github.com/eason-passion/travel-agent
++ 项目维护者：Eason
++ 仓库地址：https://github.com/eason-passion/travel-agent
++ 联系邮箱：hy3180777@gmail.com

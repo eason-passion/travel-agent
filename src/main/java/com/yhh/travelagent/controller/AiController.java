@@ -1,5 +1,7 @@
 package com.yhh.travelagent.controller;
 
+import com.yhh.travelagent.agent.HealthAssistant;
+import com.yhh.travelagent.agent.QuizAssistant;
 import com.yhh.travelagent.agent.TravelManus;
 import com.yhh.travelagent.travel.travelApp;
 import jakarta.annotation.Resource;
@@ -79,6 +81,31 @@ public class AiController {
     public SseEmitter doChatWithManus(String message) {
         TravelManus travelManus = new TravelManus(allTools, dashscopeChatModel);
         return travelManus.runStream(message);
+    }
+
+
+    /**
+     * 流式调用 Manus 超级智能体
+     *
+     * @param message
+     * @return
+     */
+    @GetMapping("/quiz/chat")
+    public SseEmitter doChatWithquiz(String message) {
+        QuizAssistant quizAssistant = new QuizAssistant(allTools, dashscopeChatModel);
+        return quizAssistant.runStream(message);
+    }
+
+    /**
+     * 流式调用 智能健康助手
+     *
+     * @param message
+     * @return
+     */
+    @GetMapping("/health/chat")
+    public SseEmitter doChatWithHealthAssistant(String message) {
+        HealthAssistant healthAssistant = new HealthAssistant(allTools, dashscopeChatModel);
+        return healthAssistant.runStream(message);
     }
 
 

@@ -6,6 +6,6 @@ package com.yhh.travelagent.demo.invoke;
  * @Description: apikey测试
  */
 public interface TestApiKey {
-    String API_KEY = "sk-ceca398bd46b4b2684d30625ef19b8ae";
+    String API_KEY = "xxx";
 }
 
